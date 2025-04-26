@@ -75,3 +75,107 @@
     </div>
 </body>
 </html>
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+from flask import Flask, request, render_template
+app = Flask(_name_)
+account = {
+    "name": "John Doe",
+    "balance": 1000.0
+}
+@app.route('/')
+def index():
+    return render_template("index.html", **account)
+@app.route('/api/<action>', methods=['POST'])
+def handle_transaction(action):
+    data = request.get_json()
+    amount = data['amount']
+    if action == 'deposit':
+        account["balance"] += amount
+        message = "Deposit successful"
+    elif action == 'withdraw':
+        account["balance"] -= amount
+        message = "Withdrawal successful"
+    return {"message": message, "balance": account["balance"]}
+@app.route('/api/balance')
+def get_balance():
+    return {"balance": account["balance"]}
+app.run(debug=True)
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Banking System</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #eef;
+      display: flex;
+      justify-content: center;
+      padding: 50px;
+    }
+    .container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    #message {
+      margin-top: 10px;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Hello, {{ name }} 👋</h2>
+    <h3>Current Balance: ₹<span id="balance">{{ balance }}</span></h3>
+    <input type="number" id="depositAmount" placeholder="Enter amount to deposit" />
+    <button onclick="handleTransaction('deposit')">Deposit</button>
+    <input type="number" id="withdrawAmount" placeholder="Enter amount to withdraw" />
+    <button onclick="handleTransaction('withdraw')">Withdraw</button>
+
+    <p id="message"></p>
+  </div>
+  <script>
+    async function updateBalance() {
+      const res = await fetch('/api/balance');
+      const { balance } = await res.json();
+      document.getElementById('balance').innerText = balance.toFixed(2);
+    }
+
+    async function handleTransaction(type) {
+      const amount = parseFloat(document.getElementById(${type}Amount).value);
+      const res = await fetch(/api/${type}, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount })
+      });
+      const data = await res.json();
+      document.getElementById('message').innerText = data.message;
+      updateBalance();
+    }
+  </script>
+</body>
+</html>
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
