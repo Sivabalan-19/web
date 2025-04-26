@@ -179,3 +179,86 @@ app.run(debug=True)
 </body>
 </html>
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
+import React, { useState, useEffect } from 'react';
+import io from 'socket.io-client';
+
+const socket = io('http://localhost:5000');
+
+function App() {
+  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState([]);
+
+  const sendMessage = () => {
+    if (message.trim()) {
+      socket.emit('sendMessage', message); //hi
+      setMessage(''); //hi
+    }
+  };
+
+  useEffect(() => {
+    socket.on('receiveMessage', (msg) => {
+      setMessages((prev) => [...prev, msg]);//hi
+    });
+
+    return () => {
+      socket.off('receiveMessage');
+    };
+  }, []);
+
+  return (
+    <div style={{ padding: '20px' }}>
+      <h2>Real-Time Chat</h2>
+      <div style={{ border: '1px solid #ccc', height: '300px', overflowY: 'scroll', padding: '10px', marginBottom: '10px' }}>
+        {messages.map((msg, idx) => (
+          <div key={idx}>{msg}</div>
+        ))}
+      </div>
+      <input
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        placeholder="Type your message"
+      />
+      <button onClick={sendMessage}>Send</button>
+    </div>
+  );
+}
+
+export default App;
+
+
+
+const express = require('express');
+const http = require('http');
+const socketIO = require('socket.io');
+const cors = require('cors');
+
+const app = express();
+const server = http.createServer(app);
+const io = socketIO(server, {
+    cors: {
+        origin: 'http://localhost:3000',
+        methods: ['GET', 'POST']
+      }
+      
+});
+
+app.use(cors());
+
+app.get('/', (req, res) => {
+  res.send('Chat Server is Running');
+});
+
+io.on('connection', (socket) => {
+  console.log('A user connected:', socket.id);
+
+  socket.on('sendMessage', (message) => {
+    io.emit('receiveMessage', message);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+  });
+});
+
+const PORT = 5000;
+server.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
